@@ -47,7 +47,7 @@ if __name__ == '__main__':
     engine = create_engine('sqlite:///reviews.db')
     Base.metadata.create_all(engine)
 
-    Session = sessionmaker(bind=engine)
+'''    Session = sessionmaker(bind=engine)
     session = Session()
 
     usuario1 = Usuario(nombre='Juan', apellido='Perez', alias='juan123')
@@ -59,4 +59,4 @@ if __name__ == '__main__':
     session.add(review1)
     session.commit()
 
-    session.close()
+    session.close()'''
