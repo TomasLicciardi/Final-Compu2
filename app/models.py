@@ -1,3 +1,4 @@
+# models.py
 from sqlalchemy import create_engine, Column, Integer, String, Text, ForeignKey
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 
@@ -10,6 +11,7 @@ class Usuario(Base):
     nombre = Column(String, nullable=False)
     apellido = Column(String, nullable=False)
     alias = Column(String, unique=True, nullable=False)
+    contrasena = Column(String, nullable=False)
 
     reviews = relationship('Review', back_populates='usuario')
 
@@ -43,20 +45,7 @@ class Review(Base):
     def __repr__(self):
         return f'<Review(id={self.id}, texto={self.texto}, calificacion={self.calificacion}, id_usuario={self.id_usuario}, id_pelicula={self.id_pelicula})>'
 
-if __name__ == '__main__':
-    engine = create_engine('sqlite:///reviews.db')
-    Base.metadata.create_all(engine)
-
-'''    Session = sessionmaker(bind=engine)
-    session = Session()
-
-    usuario1 = Usuario(nombre='Juan', apellido='Perez', alias='juan123')
-    pelicula1 = Pelicula(nombre='Inception', genero='Sci-Fi')
-    review1 = Review(texto='Gran película, me encantó!', calificacion=9, usuario=usuario1, pelicula=pelicula1)
-
-    session.add(usuario1)
-    session.add(pelicula1)
-    session.add(review1)
-    session.commit()
-
-    session.close()'''
+# Conexión a la base de datos
+engine = create_engine('sqlite:///reviews.db')
+Base.metadata.create_all(engine)
+Session = sessionmaker(bind=engine)
