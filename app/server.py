@@ -1,37 +1,31 @@
 import socket
 import threading
 import hashlib
-from models import Session, Usuario, Pelicula
+from models import Session, Usuario, Pelicula, Review
 
-# Hashear contraseña
 def hashear_contrasena(contrasena):
     return hashlib.sha256(contrasena.encode()).hexdigest()
 
-# Manejar las solicitudes del cliente
 def manejar_cliente(cliente_socket):
     session = Session()
 
-    usuario_activo = None
-
     try:
+        id_usuario = None
+
         while True:
-            # Recibir datos del cliente
             datos = cliente_socket.recv(1024).decode('utf-8')
             if not datos:
                 break
 
-            # Procesar la solicitud del cliente (registro, inicio de sesión, o acciones del menú)
             tipo_solicitud, *params = datos.split(',')
 
             if tipo_solicitud == 'registrar':
                 nombre, apellido, alias, contrasena = params
                 contrasena_hasheada = hashear_contrasena(contrasena)
 
-                # Verificar si el alias ya está en uso
                 if session.query(Usuario).filter_by(alias=alias).first():
                     cliente_socket.send(b'Alias ya en uso')
                 else:
-                    # Crear nuevo usuario
                     nuevo_usuario = Usuario(nombre=nombre, apellido=apellido, alias=alias, contrasena=contrasena_hasheada)
                     session.add(nuevo_usuario)
                     session.commit()
@@ -41,44 +35,48 @@ def manejar_cliente(cliente_socket):
                 alias, contrasena = params
                 contrasena_hasheada = hashear_contrasena(contrasena)
 
-                # Verificar las credenciales del usuario
                 usuario = session.query(Usuario).filter_by(alias=alias, contrasena=contrasena_hasheada).first()
                 if usuario:
-                    usuario_activo = usuario
+                    id_usuario = usuario.id
                     cliente_socket.send(b'Inicio de sesion exitoso')
                 else:
                     cliente_socket.send(b'Credenciales invalidas')
 
-            elif tipo_solicitud == '1' and usuario_activo:  # Agregar Película
-                nombre_pelicula = params[0]
-                genero_pelicula = params[1]
+            elif tipo_solicitud == 'agregar_pelicula':
+                nombre, genero = params
+                nueva_pelicula = Pelicula(nombre=nombre, genero=genero)
+                session.add(nueva_pelicula)
+                session.commit()
+                cliente_socket.send(b'Pelicula agregada exitosamente')
 
-                # Verificar si la película ya existe
-                if session.query(Pelicula).filter_by(nombre=nombre_pelicula).first():
-                    cliente_socket.send(b'La pelicula ya existe')
-                else:
-                    # Crear nueva película
-                    nueva_pelicula = Pelicula(nombre=nombre_pelicula, genero=genero_pelicula)
-                    session.add(nueva_pelicula)
-                    session.commit()
-                    cliente_socket.send(b'Pelicula agregada exitosamente')
-
-            elif tipo_solicitud == '2' and usuario_activo:  # Ver Listado de Películas
+            elif tipo_solicitud == 'ver_peliculas':
                 peliculas = session.query(Pelicula).all()
-                if peliculas:
-                    respuesta = "\n".join([f"{pelicula.id}. {pelicula.nombre} - {pelicula.genero}" for pelicula in peliculas])
-                else:
-                    respuesta = "No hay peliculas disponibles"
-                cliente_socket.send(respuesta.encode('utf-8'))
+                response = '\n'.join([f"{pelicula.id}. {pelicula.nombre} ({pelicula.genero})" for pelicula in peliculas])
+                cliente_socket.send(response.encode('utf-8'))
 
-            elif tipo_solicitud == '4' and usuario_activo:  # Cerrar sesión
+            elif tipo_solicitud == 'agregar_review':
+                id_pelicula, texto, calificacion = params
+                nueva_review = Review(texto=texto, calificacion=int(calificacion), id_usuario=id_usuario, id_pelicula=int(id_pelicula))
+                session.add(nueva_review)
+                session.commit()
+                cliente_socket.send(b'Review agregada exitosamente')
+
+            elif tipo_solicitud == 'ver_reviews':
+                id_pelicula = params[0]
+                reviews = session.query(Review).filter_by(id_pelicula=id_pelicula).all()
+                
+                response = '\n'.join([f"{review.id}. {review.texto} - Calificación: {review.calificacion}/10 - Por: {review.usuario.alias}" for review in reviews])
+                cliente_socket.send(response.encode('utf-8'))
+
+
+            elif tipo_solicitud == 'cerrar_sesion':
                 cliente_socket.send(b'Sesion cerrada')
-                usuario_activo = None
+                break
+
     finally:
         session.close()
         cliente_socket.close()
 
-# Iniciar servidor
 def iniciar_servidor():
     servidor_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     servidor_socket.bind(('0.0.0.0', 9999))
