@@ -2,15 +2,18 @@ import socket
 import threading
 import hashlib
 from models import Session, Usuario, Pelicula, Review
+import multiprocessing
+from logs import log_writer
 
 def hashear_contrasena(contrasena):
     return hashlib.sha256(contrasena.encode()).hexdigest()
 
-def manejar_cliente(cliente_socket):
+def manejar_cliente(cliente_socket, log_queue):
     session = Session()
 
     try:
         id_usuario = None
+        alias = None
 
         while True:
             datos = cliente_socket.recv(1024).decode('utf-8')
@@ -30,6 +33,7 @@ def manejar_cliente(cliente_socket):
                     session.add(nuevo_usuario)
                     session.commit()
                     cliente_socket.send(b'Registro exitoso')
+                    log_queue.put(f"Nuevo usuario registrado: {alias}")
 
             elif tipo_solicitud == 'iniciar_sesion':
                 alias, contrasena = params
@@ -39,6 +43,7 @@ def manejar_cliente(cliente_socket):
                 if usuario:
                     id_usuario = usuario.id
                     cliente_socket.send(b'Inicio de sesion exitoso')
+                    log_queue.put(f"Usuario inicio sesion: {alias}")
                 else:
                     cliente_socket.send(b'Credenciales invalidas')
 
@@ -68,9 +73,9 @@ def manejar_cliente(cliente_socket):
                 response = '\n'.join([f"{review.id}. {review.texto} - Calificación: {review.calificacion}/10 - Por: {review.usuario.alias}" for review in reviews])
                 cliente_socket.send(response.encode('utf-8'))
 
-
             elif tipo_solicitud == 'cerrar_sesion':
                 cliente_socket.send(b'Sesion cerrada')
+                log_queue.put(f"Usuario cerro sesion: {alias}")
                 break
 
     finally:
@@ -78,6 +83,10 @@ def manejar_cliente(cliente_socket):
         cliente_socket.close()
 
 def iniciar_servidor():
+    log_queue = multiprocessing.Queue()
+    log_process = multiprocessing.Process(target=log_writer, args=(log_queue,))
+    log_process.start()
+
     servidor_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     servidor_socket.bind(('0.0.0.0', 9999))
     servidor_socket.listen(5)
@@ -86,8 +95,11 @@ def iniciar_servidor():
     while True:
         cliente_socket, addr = servidor_socket.accept()
         print(f"Conexión establecida con {addr}")
-        manejador_cliente = threading.Thread(target=manejar_cliente, args=(cliente_socket,))
+        manejador_cliente = threading.Thread(target=manejar_cliente, args=(cliente_socket, log_queue))
         manejador_cliente.start()
+    
+    log_queue.put("TERMINATE")
+    log_process.join()
 
 if __name__ == '__main__':
     iniciar_servidor()

@@ -1,0 +1,5 @@
+2024-08-15 13:00:50.100048 - Usuario inicio sesion: tomas1
+2024-08-15 13:01:08.996775 - Usuario cerro sesion: tomas1
+2024-08-15 13:02:14.584107 - Nuevo usuario registrado: tiago1
+2024-08-15 14:28:47.329731 - Usuario inicio sesion: tiago1
+2024-08-15 14:28:52.488084 - Usuario cerro sesion: tiago1
