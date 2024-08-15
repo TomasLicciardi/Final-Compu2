@@ -22,7 +22,7 @@ def iniciar_cliente():
     cliente_socket.connect(('127.0.0.1', 9999))
 
     while True:
-        print("\nMenú:")
+        print("\nMenú Principal:")
         print("1. Registrarse")
         print("2. Iniciar sesión")
         print("3. Salir")
@@ -31,17 +31,38 @@ def iniciar_cliente():
 
         if eleccion == '1':
             solicitud = cliente_registro()
+            cliente_socket.send(solicitud.encode('utf-8'))
         elif eleccion == '2':
             solicitud = cliente_inicio_sesion()
+            cliente_socket.send(solicitud.encode('utf-8'))
         elif eleccion == '3':
+            print("Saliendo del sistema...")
             break
         else:
             print("Opción inválida. Inténtalo de nuevo.")
             continue
 
-        cliente_socket.send(solicitud.encode('utf-8'))
         respuesta = cliente_socket.recv(1024).decode('utf-8')
         print(f"Respuesta del servidor: {respuesta}")
+
+        # Si el usuario se registra o inicia sesión correctamente, mostrar el menú adicional
+        if "exitoso" in respuesta:
+            while True:
+                print("\nMenú de Usuario:")
+                print("1. Agregar Película")
+                print("2. Ver Listado de Películas")
+                print("3. Ver Reviews (No implementado)")
+                print("4. Cerrar sesión")
+
+                opcion = input("Elige una opción (1/2/3/4): ")
+                cliente_socket.send(opcion.encode('utf-8'))
+
+                respuesta_menu = cliente_socket.recv(1024).decode('utf-8')
+                print(f"Respuesta del servidor: {respuesta_menu}")
+
+                if opcion == '4':
+                    print("Sesión cerrada.")
+                    break
 
     cliente_socket.close()
 
