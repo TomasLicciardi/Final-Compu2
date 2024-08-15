@@ -8,3 +8,4 @@ def log_writer(queue):
             if message == "TERMINATE":
                 break
             log_file.write(f"{datetime.now()} - {message}\n")
+            log_file.flush()  # Asegura que los datos se escriban inmediatamente
