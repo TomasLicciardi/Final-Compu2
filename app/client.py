@@ -17,6 +17,17 @@ def cliente_inicio_sesion():
     solicitud = f"iniciar_sesion,{alias},{contrasena}"
     return solicitud
 
+def agregar_pelicula():
+    nombre_pelicula = input("Nombre de la película: ")
+    genero_pelicula = input("Género de la película: ")
+
+    solicitud = f"1,{nombre_pelicula},{genero_pelicula}"
+    return solicitud
+
+def ver_peliculas():
+    solicitud = "2"
+    return solicitud
+
 def iniciar_cliente():
     cliente_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     cliente_socket.connect(('127.0.0.1', 9999))
@@ -55,13 +66,24 @@ def iniciar_cliente():
                 print("4. Cerrar sesión")
 
                 opcion = input("Elige una opción (1/2/3/4): ")
-                cliente_socket.send(opcion.encode('utf-8'))
+
+                if opcion == '1':
+                    solicitud = agregar_pelicula()
+                elif opcion == '2':
+                    solicitud = ver_peliculas()
+                elif opcion == '4':
+                    print("Sesión cerrada.")
+                    solicitud = "4"
+                else:
+                    print("Opción inválida. Inténtalo de nuevo.")
+                    continue
+
+                cliente_socket.send(solicitud.encode('utf-8'))
 
                 respuesta_menu = cliente_socket.recv(1024).decode('utf-8')
                 print(f"Respuesta del servidor: {respuesta_menu}")
 
                 if opcion == '4':
-                    print("Sesión cerrada.")
                     break
 
     cliente_socket.close()
