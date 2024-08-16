@@ -87,19 +87,32 @@ def iniciar_servidor():
     log_process = multiprocessing.Process(target=log_writer, args=(log_queue,))
     log_process.start()
 
-    servidor_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    servidor_socket.bind(('0.0.0.0', 9999))
-    servidor_socket.listen(5)
-    print("Servidor escuchando en el puerto 9999")
+    servidor_ipv4 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    servidor_ipv4.bind(('0.0.0.0', 9999))
+    servidor_ipv4.listen(5)
+    print("Servidor IPv4 iniciado y esperando conexiones en el puerto 9999...")
+
+    servidor_ipv6 = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+    servidor_ipv6.bind(('::', 9999))
+    servidor_ipv6.listen(5)
+    print("Servidor IPv6 iniciado y esperando conexiones en el puerto 9999...")
 
     while True:
-        cliente_socket, addr = servidor_socket.accept()
-        print(f"Conexión establecida con {addr}")
-        manejador_cliente = threading.Thread(target=manejar_cliente, args=(cliente_socket, log_queue))
-        manejador_cliente.start()
-    
-    log_queue.put("TERMINATE")
-    log_process.join()
+        try:
+            cliente_ipv4, direccion_ipv4 = servidor_ipv4.accept()
+            print(f"Conexión IPv4 establecida desde {direccion_ipv4}")
+            threading.Thread(target=manejar_cliente, args=(cliente_ipv4, log_queue)).start()
 
-if __name__ == '__main__':
+            cliente_ipv6, direccion_ipv6 = servidor_ipv6.accept()
+            print(f"Conexión IPv6 establecida desde {direccion_ipv6}")
+            threading.Thread(target=manejar_cliente, args=(cliente_ipv6, log_queue)).start()
+        except KeyboardInterrupt:
+            print("Cerrando servidor...")
+            servidor_ipv4.close()
+            servidor_ipv6.close()
+            log_process.terminate()
+            log_process.join()
+            break
+
+if __name__ == "__main__":
     iniciar_servidor()

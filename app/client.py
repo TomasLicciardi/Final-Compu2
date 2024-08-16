@@ -43,8 +43,24 @@ def menu_pelicula(cliente_socket, id_pelicula):
             print("Opción inválida. Inténtalo de nuevo.")
 
 def iniciar_cliente():
-    cliente_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    cliente_socket.connect(('127.0.0.1', 9999))
+    print("¿Con qué versión de IP deseas conectarte?")
+    print("1. IPv4")
+    print("2. IPv6")
+    ip_version = input("Elige una opción (1/2): ")
+
+    if ip_version == '1':
+        familia_direccion = socket.AF_INET
+        direccion = '127.0.0.1'
+    elif ip_version == '2':
+        familia_direccion = socket.AF_INET6
+        direccion = '::1'
+    else:
+        print("Opción inválida. Usando IPv4 por defecto.")
+        familia_direccion = socket.AF_INET
+        direccion = '127.0.0.1'
+
+    cliente_socket = socket.socket(familia_direccion, socket.SOCK_STREAM)
+    cliente_socket.connect((direccion, 9999))
 
     while True:
         print("\nMenú Principal:")

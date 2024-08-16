@@ -10,3 +10,9 @@
 2024-08-15 19:33:00.429878 - Usuario inicio sesion: tomas1
 2024-08-15 19:33:23.710095 - Usuario inicio sesion: tomas1
 2024-08-15 19:34:04.454879 - Usuario cerro sesion: tomas1
+2024-08-15 21:58:24.897977 - Usuario inicio sesion: joaquin1
+2024-08-15 21:58:39.485822 - Usuario inicio sesion: santino1
+2024-08-15 22:00:25.817519 - Usuario inicio sesion: tiago1
+2024-08-15 22:00:58.626909 - Usuario cerro sesion: tiago1
+2024-08-15 22:01:07.266853 - Usuario inicio sesion: tomas1
+2024-08-15 22:01:51.058834 - Usuario cerro sesion: tomas1
