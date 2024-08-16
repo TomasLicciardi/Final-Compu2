@@ -1,2 +1,2 @@
-app/logs.txt
-app/__pycache__/
+logs.txt
+__pycache__/
