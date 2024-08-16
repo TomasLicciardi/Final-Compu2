@@ -88,14 +88,14 @@ def iniciar_servidor():
     log_process.start()
 
     servidor_ipv4 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    servidor_ipv4.bind(('0.0.0.0', 9999))
+    servidor_ipv4.bind(('0.0.0.0', 5000))
     servidor_ipv4.listen(5)
-    print("Servidor IPv4 iniciado y esperando conexiones en el puerto 9999...")
+    print("Servidor IPv4 iniciado y esperando conexiones en el puerto 5000...")
 
     servidor_ipv6 = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-    servidor_ipv6.bind(('::', 9999))
+    servidor_ipv6.bind(('::', 5000))
     servidor_ipv6.listen(5)
-    print("Servidor IPv6 iniciado y esperando conexiones en el puerto 9999...")
+    print("Servidor IPv6 iniciado y esperando conexiones en el puerto 5000...")
 
     while True:
         try:

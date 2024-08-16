@@ -60,7 +60,7 @@ def iniciar_cliente():
         direccion = '127.0.0.1'
 
     cliente_socket = socket.socket(familia_direccion, socket.SOCK_STREAM)
-    cliente_socket.connect((direccion, 9999))
+    cliente_socket.connect((direccion, 5000))
 
     while True:
         print("\nMenú Principal:")
