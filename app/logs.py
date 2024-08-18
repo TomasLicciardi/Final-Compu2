@@ -1,4 +1,3 @@
-import multiprocessing
 from datetime import datetime
 
 def log_writer(queue):

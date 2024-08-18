@@ -53,6 +53,7 @@ def manejar_cliente(cliente_socket, log_queue):
                 session.add(nueva_pelicula)
                 session.commit()
                 cliente_socket.send(b'Pelicula agregada exitosamente')
+                log_queue.put(f"Se ha agregado la película '{nombre}' por el usuario {alias}")
 
             elif tipo_solicitud == 'ver_peliculas':
                 peliculas = session.query(Pelicula).all()
@@ -65,6 +66,8 @@ def manejar_cliente(cliente_socket, log_queue):
                 session.add(nueva_review)
                 session.commit()
                 cliente_socket.send(b'Review agregada exitosamente')
+                pelicula = session.query(Pelicula).filter_by(id=id_pelicula).first()
+                log_queue.put(f"Se ha agregado una nueva review a la película '{pelicula.nombre}' por el usuario {alias}")
 
             elif tipo_solicitud == 'ver_reviews':
                 id_pelicula = params[0]
@@ -88,14 +91,16 @@ def iniciar_servidor():
     log_process.start()
 
     servidor_ipv4 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    servidor_ipv4.bind(('0.0.0.0', 5000))
+    puerto_ipv4 = 9999  # Puerto para IPv4
+    servidor_ipv4.bind(('0.0.0.0', puerto_ipv4))
     servidor_ipv4.listen(5)
-    print("Servidor IPv4 iniciado y esperando conexiones en el puerto 5000...")
+    print(f"Servidor IPv4 iniciado y esperando conexiones en el puerto {puerto_ipv4}...")
 
     servidor_ipv6 = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-    servidor_ipv6.bind(('::', 5000))
+    puerto_ipv6 = 9998  # Puerto diferente para IPv6
+    servidor_ipv6.bind(('::', puerto_ipv6))
     servidor_ipv6.listen(5)
-    print("Servidor IPv6 iniciado y esperando conexiones en el puerto 5000...")
+    print(f"Servidor IPv6 iniciado y esperando conexiones en el puerto {puerto_ipv6}...")
 
     while True:
         try:

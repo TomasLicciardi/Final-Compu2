@@ -51,16 +51,19 @@ def iniciar_cliente():
     if ip_version == '1':
         familia_direccion = socket.AF_INET
         direccion = '127.0.0.1'
+        puerto = 9999  # Puerto para IPv4
     elif ip_version == '2':
         familia_direccion = socket.AF_INET6
         direccion = '::1'
+        puerto = 9998  # Puerto para IPv6
     else:
         print("Opción inválida. Usando IPv4 por defecto.")
         familia_direccion = socket.AF_INET
         direccion = '127.0.0.1'
+        puerto = 9999
 
     cliente_socket = socket.socket(familia_direccion, socket.SOCK_STREAM)
-    cliente_socket.connect((direccion, 5000))
+    cliente_socket.connect((direccion, puerto))
 
     while True:
         print("\nMenú Principal:")

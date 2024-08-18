@@ -1,4 +1,7 @@
-2024-08-16 13:31:31.842012 - Usuario inicio sesion: tomas1
-2024-08-16 13:32:11.128311 - Usuario cerro sesion: tomas1
-2024-08-16 13:32:22.996293 - Usuario inicio sesion: franco1
-2024-08-16 13:32:48.166963 - Usuario cerro sesion: franco1
+2024-08-18 19:57:22.676041 - Usuario inicio sesion: tomas1
+2024-08-18 19:57:36.191762 - Usuario inicio sesion: joaquin1
+2024-08-18 19:58:29.233591 - Usuario inicio sesion: joaquin1
+2024-08-18 19:58:38.372570 - Se ha agregado la película 'El secreto de sus ojos' por el usuario joaquin1
+2024-08-18 19:58:41.608634 - Usuario cerro sesion: joaquin1
+2024-08-18 19:59:00.582106 - Se ha agregado una nueva review a la película 'El secreto de sus ojos' por el usuario tomas1
+2024-08-18 19:59:03.428618 - Usuario cerro sesion: tomas1
