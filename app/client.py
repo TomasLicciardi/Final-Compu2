@@ -6,14 +6,12 @@ def cliente_registro():
     nombre = input("Ingresa tu nombre: ")
     apellido = input("Ingresa tu apellido: ")
     contrasena = getpass.getpass("Ingresa tu contraseña: ")
-
     solicitud = f"registrar,{nombre},{apellido},{alias},{contrasena}"
     return solicitud
 
 def cliente_inicio_sesion():
     alias = input("Ingresa tu alias: ")
     contrasena = getpass.getpass("Ingresa tu contraseña: ")
-
     solicitud = f"iniciar_sesion,{alias},{contrasena}"
     return solicitud
 
@@ -24,7 +22,6 @@ def menu_pelicula(cliente_socket, id_pelicula):
         print("2. Ver Reviews")
         print("3. Volver")
         eleccion = input("Elige una opción (1/2/3): ")
-
         if eleccion == '1':
             texto = input("Escribe tu review: ")
             calificacion = input("Califica la película del 1 al 10: ")
@@ -43,27 +40,37 @@ def menu_pelicula(cliente_socket, id_pelicula):
             print("Opción inválida. Inténtalo de nuevo.")
 
 def iniciar_cliente():
-    print("¿Con qué versión de IP deseas conectarte?")
-    print("1. IPv4")
-    print("2. IPv6")
-    ip_version = input("Elige una opción (1/2): ")
+    # Preguntar al usuario qué tipo de conexión desea usar
+    eleccion = input("¿Deseas usar IPv4 (1) o IPv6 (2)? ")
 
-    if ip_version == '1':
-        familia_direccion = socket.AF_INET
-        direccion = '127.0.0.1'
-        puerto = 9999  # Puerto para IPv4
-    elif ip_version == '2':
-        familia_direccion = socket.AF_INET6
-        direccion = '::1'
-        puerto = 9998  # Puerto para IPv6
+    if eleccion == '1':
+        family = socket.AF_INET
+    elif eleccion == '2':
+        family = socket.AF_INET6
     else:
         print("Opción inválida. Usando IPv4 por defecto.")
-        familia_direccion = socket.AF_INET
-        direccion = '127.0.0.1'
-        puerto = 9999
+        family = socket.AF_INET
 
-    cliente_socket = socket.socket(familia_direccion, socket.SOCK_STREAM) #Esto se utiliza SOCK_STREAM para TCP (Que los datos viajen en orden y sin pérdidas)
-    cliente_socket.connect((direccion, puerto))
+    # Obtener información de direcciones para el tipo de conexión seleccionado
+    direccion_info = socket.getaddrinfo(None, 9999, family, socket.SOCK_STREAM)
+
+    cliente_socket = None
+
+    for res in direccion_info:
+        af, socktype, proto, canonname, sa = res
+        try:
+            cliente_socket = socket.socket(af, socktype, proto)
+            cliente_socket.connect(sa)
+            print(f"Conectado a {sa}")
+            break
+        except OSError as e:
+            if cliente_socket:
+                cliente_socket.close()
+            cliente_socket = None
+
+    if cliente_socket is None:
+        print("No se pudo establecer conexión con el servidor.")
+        return
 
     while True:
         print("\nMenú Principal:")

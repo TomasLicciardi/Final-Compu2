@@ -4,6 +4,7 @@ import hashlib
 from models import Session, Usuario, Pelicula, Review
 import multiprocessing
 from logs import log_writer
+import select
 
 def hashear_contrasena(contrasena):
     return hashlib.sha256(contrasena.encode()).hexdigest()
@@ -86,38 +87,69 @@ def manejar_cliente(cliente_socket, log_queue):
         cliente_socket.close()
 
 def iniciar_servidor():
+    # Inicializar la cola y el proceso para manejar los logs
     log_queue = multiprocessing.Queue()
     log_process = multiprocessing.Process(target=log_writer, args=(log_queue,))
     log_process.start()
 
-    servidor_ipv4 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    puerto_ipv4 = 9999  # Puerto para IPv4
-    servidor_ipv4.bind(('0.0.0.0', puerto_ipv4))
-    servidor_ipv4.listen(5)
-    print(f"Servidor IPv4 iniciado y esperando conexiones en el puerto {puerto_ipv4}...")
+    # Obtener información de direcciones para todas las interfaces (IPv4 e IPv6)
+    addrinfos = socket.getaddrinfo(None, 9999, socket.AF_UNSPEC, socket.SOCK_STREAM, 0, socket.AI_PASSIVE)
 
-    servidor_ipv6 = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-    puerto_ipv6 = 9998  # Puerto diferente para IPv6
-    servidor_ipv6.bind(('::', puerto_ipv6))
-    servidor_ipv6.listen(5)
-    print(f"Servidor IPv6 iniciado y esperando conexiones en el puerto {puerto_ipv6}...")
+    # Lista para almacenar los sockets del servidor
+    server_sockets = []
 
-    while True:
+    # Crear y configurar los sockets basados en la información de direcciones obtenida
+    for addrinfo in addrinfos:
+        family, socktype, proto, canonname, sockaddr = addrinfo
         try:
-            cliente_ipv4, direccion_ipv4 = servidor_ipv4.accept()
-            print(f"Conexión IPv4 establecida desde {direccion_ipv4}")
-            threading.Thread(target=manejar_cliente, args=(cliente_ipv4, log_queue)).start()
+            server_socket = socket.socket(family, socktype, proto)
+            server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-            cliente_ipv6, direccion_ipv6 = servidor_ipv6.accept()
-            print(f"Conexión IPv6 establecida desde {direccion_ipv6}")
-            threading.Thread(target=manejar_cliente, args=(cliente_ipv6, log_queue)).start()
-        except KeyboardInterrupt:
-            print("Cerrando servidor...")
-            servidor_ipv4.close()
-            servidor_ipv6.close()
-            log_process.terminate()
-            log_process.join()
-            break
+            if family == socket.AF_INET6:
+                # Configurar el socket IPv6 para que solo acepte conexiones IPv6
+                server_socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 1)
+
+            # Vincular el socket a la dirección y puerto especificados
+            server_socket.bind(sockaddr)
+            server_socket.listen(5)
+            server_sockets.append(server_socket)
+
+            # Determinar el tipo de dirección y mostrar un mensaje
+            if family == socket.AF_INET6:
+                address_type = "IPv6"
+            else: 
+                address_type = "IPv4"
+            print(f"Servidor escuchando en {sockaddr[0]}:{sockaddr[1]} ({address_type})")
+
+        except Exception as e:
+            print(f"Error al crear el socket para {sockaddr}: {e}")
+
+    # Verificar si al menos un socket se creó correctamente
+    if not server_sockets:
+        raise RuntimeError("No se pudieron crear sockets para ninguna de las direcciones")
+
+    try:
+        while True:
+            # Esperar conexiones en cualquiera de los sockets disponibles
+            readable, _, _ = select.select(server_sockets, [], [])
+            for s in readable:
+                cliente_socket, cliente_direccion = s.accept()
+                print(f"Conexión establecida desde {cliente_direccion}")
+
+                # Crear un nuevo hilo para manejar la conexión del cliente
+                client_thread = threading.Thread(target=manejar_cliente, args=(cliente_socket, log_queue))
+                client_thread.start()
+
+    except KeyboardInterrupt:
+        print("Cerrando servidor...")
+
+    finally:
+        # Cerrar todos los sockets y el proceso de logs
+        for server_socket in server_sockets:
+            server_socket.close()
+
+        log_process.terminate()
+        log_process.join()
 
 if __name__ == "__main__":
     iniciar_servidor()

@@ -8,3 +8,13 @@
 2024-08-20 12:58:12.899235 - Usuario inicio sesion: tomas1
 2024-08-20 12:59:19.116035 - Se ha agregado la película 'Busqueda Implacable' por el usuario tomas1
 2024-08-20 13:00:06.692690 - Usuario cerro sesion: tomas1
+2024-08-21 17:34:24.720201 - Nuevo usuario registrado: fran1
+2024-08-21 17:34:47.115300 - Usuario inicio sesion: fran1
+2024-08-21 17:35:10.182424 - Se ha agregado la película 'Romper el circulo' por el usuario fran1
+2024-08-21 17:35:24.401972 - Se ha agregado una nueva review a la película 'Boku No Hero' por el usuario fran1
+2024-08-21 17:35:27.145990 - Usuario cerro sesion: fran1
+2024-08-21 17:35:36.160459 - Usuario inicio sesion: marcos1
+2024-08-21 17:36:06.070512 - Usuario inicio sesion: marcos1
+2024-08-21 17:36:50.478890 - Usuario inicio sesion: marcos1
+2024-08-21 17:36:58.849670 - Se ha agregado una nueva review a la película 'Boku No Hero' por el usuario marcos1
+2024-08-21 17:37:00.747083 - Usuario cerro sesion: marcos1
