@@ -13,7 +13,6 @@ def manejar_cliente(cliente_socket, log_queue):
     session = Session()
 
     try:
-        id_usuario = None
         alias = None
 
         while True:
@@ -34,6 +33,7 @@ def manejar_cliente(cliente_socket, log_queue):
                     session.add(nuevo_usuario)
                     session.commit()
                     cliente_socket.send(b'Registro exitoso')
+                    id_usuario = nuevo_usuario.id
                     log_queue.put(f"Nuevo usuario registrado: {alias}")
 
             elif tipo_solicitud == 'iniciar_sesion':
