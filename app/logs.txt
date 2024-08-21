@@ -5,3 +5,6 @@
 2024-08-18 19:58:41.608634 - Usuario cerro sesion: joaquin1
 2024-08-18 19:59:00.582106 - Se ha agregado una nueva review a la película 'El secreto de sus ojos' por el usuario tomas1
 2024-08-18 19:59:03.428618 - Usuario cerro sesion: tomas1
+2024-08-20 12:58:12.899235 - Usuario inicio sesion: tomas1
+2024-08-20 12:59:19.116035 - Se ha agregado la película 'Busqueda Implacable' por el usuario tomas1
+2024-08-20 13:00:06.692690 - Usuario cerro sesion: tomas1

@@ -62,7 +62,7 @@ def iniciar_cliente():
         direccion = '127.0.0.1'
         puerto = 9999
 
-    cliente_socket = socket.socket(familia_direccion, socket.SOCK_STREAM)
+    cliente_socket = socket.socket(familia_direccion, socket.SOCK_STREAM) #Esto se utiliza SOCK_STREAM para TCP (Que los datos viajen en orden y sin pérdidas)
     cliente_socket.connect((direccion, puerto))
 
     while True:
