@@ -105,11 +105,36 @@ def iniciar_cliente():
 
                 if eleccion == '1':
                     nombre = input("Ingresa el nombre de la película: ")
-                    genero = input("Ingresa el género de la película: ")
-                    solicitud = f"agregar_pelicula,{nombre},{genero}"
-                    cliente_socket.send(solicitud.encode('utf-8'))
-                    respuesta = cliente_socket.recv(1024).decode('utf-8')
-                    print(f"Respuesta del servidor: {respuesta}")
+                    
+                    print("Selecciona el género de la película:")
+                    print("1. Drama")
+                    print("2. Acción")
+                    print("3. Comedia")
+                    print("4. Ciencia Ficción")
+                    print("5. Terror")
+                    
+                    opcion_genero = input("Ingresa el número de la opción deseada: ")
+                    
+                    if opcion_genero == '1':
+                        genero = "Drama"
+                    elif opcion_genero == '2':
+                        genero = "Acción"
+                    elif opcion_genero == '3':
+                        genero = "Comedia"
+                    elif opcion_genero == '4':
+                        genero = "Ciencia Ficción"
+                    elif opcion_genero == '5':
+                        genero = "Terror"
+                    else:
+                        print("Opción no válida.")
+                        genero = None
+                    
+                    if genero:
+                        solicitud = f"agregar_pelicula,{nombre},{genero}"
+                        cliente_socket.send(solicitud.encode('utf-8'))
+                        respuesta = cliente_socket.recv(1024).decode('utf-8')
+                        print(f"Respuesta del servidor: {respuesta}")
+
                 elif eleccion == '2':
                     solicitud = "ver_peliculas"
                     cliente_socket.send(solicitud.encode('utf-8'))

@@ -13,6 +13,7 @@ def manejar_cliente(cliente_socket, log_queue):
     session = Session()
 
     try:
+        id_usuario = None
         alias = None
 
         while True:
@@ -34,7 +35,10 @@ def manejar_cliente(cliente_socket, log_queue):
                     session.commit()
                     cliente_socket.send(b'Registro exitoso')
                     id_usuario = nuevo_usuario.id
-                    log_queue.put(f"Nuevo usuario registrado: {alias}")
+                    if id_usuario is not None:
+                        log_queue.put(f"Nuevo usuario registrado: {alias}")
+                    else:
+                        cliente_socket.send(b'Error al registrar')
 
             elif tipo_solicitud == 'iniciar_sesion':
                 alias, contrasena = params
@@ -43,8 +47,11 @@ def manejar_cliente(cliente_socket, log_queue):
                 usuario = session.query(Usuario).filter_by(alias=alias, contrasena=contrasena_hasheada).first()
                 if usuario:
                     id_usuario = usuario.id
-                    cliente_socket.send(b'Inicio de sesion exitoso')
-                    log_queue.put(f"Usuario inicio sesion: {alias}")
+                    if id_usuario is not None:
+                        cliente_socket.send(b'Inicio de sesion exitoso')
+                        log_queue.put(f"Usuario inicio sesion: {alias}")
+                    else:
+                        cliente_socket.send(b'Error al iniciar sesion')
                 else:
                     cliente_socket.send(b'Credenciales invalidas')
 
