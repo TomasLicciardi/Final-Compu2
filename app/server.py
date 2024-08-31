@@ -64,9 +64,14 @@ def manejar_cliente(cliente_socket, log_queue):
                 log_queue.put(f"Se ha agregado la película '{nombre}' por el usuario {alias}")
 
             elif tipo_solicitud == 'ver_peliculas':
-                peliculas = session.query(Pelicula).all()
-                response = '\n'.join([f"{pelicula.id}. {pelicula.nombre} ({pelicula.genero})" for pelicula in peliculas])
-                cliente_socket.send(response.encode('utf-8'))
+                genero = params[0]  # Recibimos el género de la película
+                peliculas = session.query(Pelicula).filter_by(genero=genero).all()
+
+                if not peliculas:
+                    cliente_socket.send(f"No hay películas disponibles en el género {genero}.".encode('utf-8'))
+                else:
+                    response = '\n'.join([f"{pelicula.id}. {pelicula.nombre} ({pelicula.genero})" for pelicula in peliculas])
+                    cliente_socket.send(response.encode('utf-8'))
 
             elif tipo_solicitud == 'agregar_review':
                 id_pelicula, texto, calificacion = params
@@ -81,8 +86,11 @@ def manejar_cliente(cliente_socket, log_queue):
                 id_pelicula = params[0]
                 reviews = session.query(Review).filter_by(id_pelicula=id_pelicula).all()
                 
-                response = '\n'.join([f"{review.id}. {review.texto} - Calificación: {review.calificacion}/10 - Por: {review.usuario.alias}" for review in reviews])
-                cliente_socket.send(response.encode('utf-8'))
+                if not reviews:
+                    cliente_socket.send(b'No hay reviews de esta pelicula.')
+                else:
+                    response = '\n'.join([f"{review.id}. {review.texto} - Calificación: {review.calificacion}/10 - Por: {review.usuario.alias}" for review in reviews])
+                    cliente_socket.send(response.encode('utf-8'))
 
             elif tipo_solicitud == 'cerrar_sesion':
                 cliente_socket.send(b'Sesion cerrada')

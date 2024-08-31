@@ -33,7 +33,11 @@ def menu_pelicula(cliente_socket, id_pelicula):
             solicitud = f"ver_reviews,{id_pelicula}"
             cliente_socket.send(solicitud.encode('utf-8'))
             respuesta = cliente_socket.recv(1024).decode('utf-8')
-            print(f"Reviews:\n{respuesta}")
+            
+            if respuesta == "No hay reviews de esta película.":
+                print(respuesta)
+            else:
+                print(f"Reviews:\n{respuesta}")
         elif eleccion == '3':
             break
         else:
@@ -51,108 +55,109 @@ def iniciar_cliente():
         print("Opción inválida. Usando IPv4 por defecto.")
         family = socket.AF_INET
 
-    # Obtener información de direcciones para el tipo de conexión seleccionado
-    direccion_info = socket.getaddrinfo(None, 9999, family, socket.SOCK_STREAM)
+    cliente_socket = socket.socket(family, socket.SOCK_STREAM)
 
-    cliente_socket = None
+    if family == socket.AF_INET:
+        cliente_socket.connect(('127.0.0.1', 9999))
+    else:
+        cliente_socket.connect(('::1', 9999))
 
-    for res in direccion_info:
-        af, socktype, proto, canonname, sa = res
-        try:
-            cliente_socket = socket.socket(af, socktype, proto)
-            cliente_socket.connect(sa)
-            print(f"Conectado a {sa}")
-            break
-        except OSError as e:
-            if cliente_socket:
-                cliente_socket.close()
-            cliente_socket = None
+    try:
+        while True:
+            print("\nMenú principal:")
+            print("1. Registrarse")
+            print("2. Iniciar Sesión")
+            print("3. Salir")
+            eleccion = input("Elige una opción (1/2/3): ")
 
-    if cliente_socket is None:
-        print("No se pudo establecer conexión con el servidor.")
-        return
+            if eleccion == '1':
+                solicitud = cliente_registro()
+            elif eleccion == '2':
+                solicitud = cliente_inicio_sesion()
+            elif eleccion == '3':
+                print("Saliendo...")
+                break
+            else:
+                print("Opción inválida. Inténtalo de nuevo.")
+                continue
 
-    while True:
-        print("\nMenú Principal:")
-        print("1. Registrarse")
-        print("2. Iniciar sesión")
-        print("3. Salir")
+            cliente_socket.send(solicitud.encode('utf-8'))
+            respuesta = cliente_socket.recv(1024).decode('utf-8')
+            print(f"Respuesta del servidor: {respuesta}")
 
-        eleccion = input("Elige una opción (1/2/3): ")
+            if respuesta == "Inicio de sesion exitoso":
+                while True:
+                    print("\nMenú de Usuario:")
+                    print("1. Agregar Película")
+                    print("2. Ver Películas")
+                    print("3. Cerrar Sesión")
+                    eleccion = input("Elige una opción (1/2/3): ")
 
-        if eleccion == '1':
-            solicitud = cliente_registro()
-        elif eleccion == '2':
-            solicitud = cliente_inicio_sesion()
-        elif eleccion == '3':
-            break
-        else:
-            print("Opción inválida. Inténtalo de nuevo.")
-            continue
-
-        cliente_socket.send(solicitud.encode('utf-8'))
-        respuesta = cliente_socket.recv(1024).decode('utf-8')
-        print(f"Respuesta del servidor: {respuesta}")
-
-        if "exitoso" in respuesta:
-            while True:
-                print("\nMenú Principal:")
-                print("1. Agregar Película")
-                print("2. Ver Películas")
-                print("3. Cerrar Sesión")
-
-                eleccion = input("Elige una opción (1/2/3): ")
-
-                if eleccion == '1':
-                    nombre = input("Ingresa el nombre de la película: ")
-                    
-                    print("Selecciona el género de la película:")
-                    print("1. Drama")
-                    print("2. Acción")
-                    print("3. Comedia")
-                    print("4. Ciencia Ficción")
-                    print("5. Terror")
-                    
-                    opcion_genero = input("Ingresa el número de la opción deseada: ")
-                    
-                    if opcion_genero == '1':
-                        genero = "Drama"
-                    elif opcion_genero == '2':
-                        genero = "Acción"
-                    elif opcion_genero == '3':
-                        genero = "Comedia"
-                    elif opcion_genero == '4':
-                        genero = "Ciencia Ficción"
-                    elif opcion_genero == '5':
-                        genero = "Terror"
-                    else:
-                        print("Opción no válida.")
-                        genero = None
-                    
-                    if genero:
+                    if eleccion == '1':
+                        nombre = input("Ingresa el nombre de la película: ")
+                        print("Selecciona el género de la película:")
+                        print("1. Drama")
+                        print("2. Acción")
+                        print("3. Comedia")
+                        print("4. Ciencia Ficción")
+                        print("5. Terror")
+                        genero = input("Ingresa el género de la película: ")
+                        if genero == '1':
+                            genero = "Drama"
+                        elif genero == '2':
+                            genero = "Acción"
+                        elif genero == '3':
+                            genero = "Comedia"
+                        elif genero == '4':
+                            genero = "Ciencia Ficción"
+                        elif genero == '5':
+                            genero = "Terror"
+                        else:
+                            print("Opción no válida.")
+                            continue
                         solicitud = f"agregar_pelicula,{nombre},{genero}"
                         cliente_socket.send(solicitud.encode('utf-8'))
                         respuesta = cliente_socket.recv(1024).decode('utf-8')
                         print(f"Respuesta del servidor: {respuesta}")
+                    elif eleccion == '2':
+                        print("Selecciona el género de la película:")
+                        print("1. Drama")
+                        print("2. Acción")
+                        print("3. Comedia")
+                        print("4. Ciencia Ficción")
+                        print("5. Terror")
+                        
+                        opcion_genero = input("Ingresa el número de la opción deseada: ")
+                        
+                        if opcion_genero == '1':
+                            genero = "Drama"
+                        elif opcion_genero == '2':
+                            genero = "Acción"
+                        elif opcion_genero == '3':
+                            genero = "Comedia"
+                        elif opcion_genero == '4':
+                            genero = "Ciencia Ficción"
+                        elif opcion_genero == '5':
+                            genero = "Terror"
+                        else:
+                            print("Opción no válida.")
+                            continue
+                        
+                        solicitud = f"ver_peliculas,{genero}"
+                        cliente_socket.send(solicitud.encode('utf-8'))
+                        respuesta = cliente_socket.recv(1024).decode('utf-8')
+                        print(f"Películas disponibles:\n{respuesta}")
+                        
+                        if "No hay películas disponibles" not in respuesta:
+                            id_pelicula = input("Selecciona una película por número: ")
+                            menu_pelicula(cliente_socket, id_pelicula)
+                    elif eleccion == '3':
+                        cliente_socket.send(b'cerrar_sesion')
+                        break
+                    else:
+                        print("Opción inválida. Inténtalo de nuevo.")
+    finally:
+        cliente_socket.close()
 
-                elif eleccion == '2':
-                    solicitud = "ver_peliculas"
-                    cliente_socket.send(solicitud.encode('utf-8'))
-                    respuesta = cliente_socket.recv(1024).decode('utf-8')
-                    print(f"Películas disponibles:\n{respuesta}")
-                    
-                    id_pelicula = input("Selecciona una película por número: ")
-                    menu_pelicula(cliente_socket, id_pelicula)
-                elif eleccion == '3':
-                    solicitud = "cerrar_sesion"
-                    cliente_socket.send(solicitud.encode('utf-8'))
-                    respuesta = cliente_socket.recv(1024).decode('utf-8')
-                    print(f"Respuesta del servidor: {respuesta}")
-                    break
-                else:
-                    print("Opción inválida. Inténtalo de nuevo.")
-
-    cliente_socket.close()
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     iniciar_cliente()
