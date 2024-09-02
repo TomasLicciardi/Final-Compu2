@@ -4,7 +4,6 @@ import hashlib
 from models import Session, Usuario, Pelicula, Review
 import multiprocessing
 from logs import log_writer
-import select
 
 def hashear_contrasena(contrasena):
     return hashlib.sha256(contrasena.encode()).hexdigest()
@@ -64,7 +63,7 @@ def manejar_cliente(cliente_socket, log_queue):
                 log_queue.put(f"Se ha agregado la película '{nombre}' por el usuario {alias}")
 
             elif tipo_solicitud == 'ver_peliculas':
-                genero = params[0]  # Recibimos el género de la película
+                genero = params[0]
                 peliculas = session.query(Pelicula).filter_by(genero=genero).all()
 
                 if not peliculas:
@@ -101,68 +100,70 @@ def manejar_cliente(cliente_socket, log_queue):
         session.close()
         cliente_socket.close()
 
+def servidor_ipv4(log_queue, stop_event):
+    server_socket_ipv4 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket_ipv4.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server_socket_ipv4.bind(('0.0.0.0', 9999))  # IPv4
+    server_socket_ipv4.listen(5)
+    print("Servidor IPv4 escuchando en el puerto 9999")
+
+    while not stop_event.is_set():
+        try:
+            server_socket_ipv4.settimeout(1.0)
+            cliente_socket, cliente_direccion = server_socket_ipv4.accept()
+            print(f"Conexión establecida desde {cliente_direccion} (IPv4)")
+            client_thread = threading.Thread(target=manejar_cliente, args=(cliente_socket, log_queue))
+            client_thread.start()
+        except socket.timeout:
+            continue
+        except KeyboardInterrupt:
+            break
+
+    server_socket_ipv4.close()
+
+def servidor_ipv6(log_queue, stop_event):
+    server_socket_ipv6 = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+    server_socket_ipv6.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server_socket_ipv6.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 1)  # Solo conexiones IPv6
+    server_socket_ipv6.bind(('::', 9999))  # IPv6
+    server_socket_ipv6.listen(5)
+    print("Servidor IPv6 escuchando en el puerto 9999")
+
+    while not stop_event.is_set():
+        try:
+            server_socket_ipv6.settimeout(1.0)
+            cliente_socket, cliente_direccion = server_socket_ipv6.accept()
+            print(f"Conexión establecida desde {cliente_direccion} (IPv6)")
+            client_thread = threading.Thread(target=manejar_cliente, args=(cliente_socket, log_queue))
+            client_thread.start()
+        except socket.timeout:
+            continue
+        except KeyboardInterrupt:
+            break
+
+    server_socket_ipv6.close()
+
 def iniciar_servidor():
-    # Inicializar la cola y el proceso para manejar los logs
     log_queue = multiprocessing.Queue()
     log_process = multiprocessing.Process(target=log_writer, args=(log_queue,))
     log_process.start()
 
-    # Obtener información de direcciones para todas las interfaces (IPv4 e IPv6)
-    addrinfos = socket.getaddrinfo(None, 9999, socket.AF_UNSPEC, socket.SOCK_STREAM, 0, socket.AI_PASSIVE)
-
-    # Lista para almacenar los sockets del servidor
-    server_sockets = []
-
-    # Crear y configurar los sockets basados en la información de direcciones obtenida
-    for addrinfo in addrinfos:
-        family, socktype, proto, canonname, sockaddr = addrinfo
-        try:
-            server_socket = socket.socket(family, socktype, proto)
-            server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-
-            if family == socket.AF_INET6:
-                # Configurar el socket IPv6 para que solo acepte conexiones IPv6
-                server_socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 1)
-
-            # Vincular el socket a la dirección y puerto especificados
-            server_socket.bind(sockaddr)
-            server_socket.listen(5)
-            server_sockets.append(server_socket)
-
-            # Determinar el tipo de dirección y mostrar un mensaje
-            if family == socket.AF_INET6:
-                address_type = "IPv6"
-            else: 
-                address_type = "IPv4"
-            print(f"Servidor escuchando en {sockaddr[0]}:{sockaddr[1]} ({address_type})")
-
-        except Exception as e:
-            print(f"Error al crear el socket para {sockaddr}: {e}")
-
-    # Verificar si al menos un socket se creó correctamente
-    if not server_sockets:
-        raise RuntimeError("No se pudieron crear sockets para ninguna de las direcciones")
+    stop_event = threading.Event()
 
     try:
-        while True:
-            # Esperar conexiones en cualquiera de los sockets disponibles
-            readable, _, _ = select.select(server_sockets, [], [])
-            for s in readable:
-                cliente_socket, cliente_direccion = s.accept()
-                print(f"Conexión establecida desde {cliente_direccion}")
+        # Crear y arrancar los hilos para IPv4 e IPv6
+        hilo_ipv4 = threading.Thread(target=servidor_ipv4, args=(log_queue, stop_event))
+        hilo_ipv6 = threading.Thread(target=servidor_ipv6, args=(log_queue, stop_event))
 
-                # Crear un nuevo hilo para manejar la conexión del cliente
-                client_thread = threading.Thread(target=manejar_cliente, args=(cliente_socket, log_queue))
-                client_thread.start()
+        hilo_ipv4.start()
+        hilo_ipv6.start()
 
+        hilo_ipv4.join()
+        hilo_ipv6.join()
     except KeyboardInterrupt:
-        print("Cerrando servidor...")
-
+        print("\nCerrando servidor...")
+        stop_event.set()
     finally:
-        # Cerrar todos los sockets y el proceso de logs
-        for server_socket in server_sockets:
-            server_socket.close()
-
         log_process.terminate()
         log_process.join()
 
