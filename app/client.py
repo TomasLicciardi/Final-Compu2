@@ -24,7 +24,12 @@ def menu_pelicula(cliente_socket, id_pelicula):
         eleccion = input("Elige una opción (1/2/3): ")
         if eleccion == '1':
             texto = input("Escribe tu review: ")
-            calificacion = input("Califica la película del 1 al 10: ")
+            while True:
+                calificacion = input("Califica la película del 1 al 10: ")
+                if calificacion.isdigit() and 1 <= int(calificacion) <= 10:
+                    break
+                else:
+                    print("Calificación inválida. Inténtalo de nuevo.")
             solicitud = f"agregar_review,{id_pelicula},{texto},{calificacion}"
             cliente_socket.send(solicitud.encode('utf-8'))
             respuesta = cliente_socket.recv(1024).decode('utf-8')
@@ -101,20 +106,25 @@ def iniciar_cliente():
                         print("3. Comedia")
                         print("4. Ciencia Ficción")
                         print("5. Terror")
-                        genero = input("Ingresa el género de la película: ")
-                        if genero == '1':
-                            genero = "Drama"
-                        elif genero == '2':
-                            genero = "Acción"
-                        elif genero == '3':
-                            genero = "Comedia"
-                        elif genero == '4':
-                            genero = "Ciencia Ficción"
-                        elif genero == '5':
-                            genero = "Terror"
-                        else:
-                            print("Opción no válida.")
-                            continue
+                        while True:
+                            genero = input("Ingresa el género de la película: ")
+                            if genero == '1':
+                                genero = "Drama"
+                                break
+                            elif genero == '2':
+                                genero = "Acción"
+                                break
+                            elif genero == '3':
+                                genero = "Comedia"
+                                break
+                            elif genero == '4':
+                                genero = "Ciencia Ficción"
+                                break
+                            elif genero == '5':
+                                genero = "Terror"
+                                break
+                            else:
+                                print("Género inválido. Inténtalo de nuevo.")
                         solicitud = f"agregar_pelicula,{nombre},{genero}"
                         cliente_socket.send(solicitud.encode('utf-8'))
                         respuesta = cliente_socket.recv(1024).decode('utf-8')
