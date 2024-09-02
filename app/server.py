@@ -100,10 +100,18 @@ def manejar_cliente(cliente_socket, log_queue):
         session.close()
         cliente_socket.close()
 
+def obtener_direccion_info(host, port, familia):
+    for res in socket.getaddrinfo(host, port, familia, socket.SOCK_STREAM):
+        af, socktype, proto, canonname, sa = res
+        return af, socktype, proto, sa
+    return None
+
+
 def servidor_ipv4(log_queue, stop_event):
-    server_socket_ipv4 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    af, socktype, proto, sa = obtener_direccion_info('0.0.0.0', 9999, socket.AF_INET)
+    server_socket_ipv4 = socket.socket(af, socktype, proto)
     server_socket_ipv4.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    server_socket_ipv4.bind(('0.0.0.0', 9999))  # IPv4
+    server_socket_ipv4.bind(sa)  # IPv4
     server_socket_ipv4.listen(5)
     print("Servidor IPv4 escuchando en el puerto 9999")
 
@@ -122,10 +130,11 @@ def servidor_ipv4(log_queue, stop_event):
     server_socket_ipv4.close()
 
 def servidor_ipv6(log_queue, stop_event):
-    server_socket_ipv6 = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+    af, socktype, proto, sa = obtener_direccion_info('::', 9999, socket.AF_INET6)
+    server_socket_ipv6 = socket.socket(af, socktype, proto)
     server_socket_ipv6.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    server_socket_ipv6.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 1)  # Solo conexiones IPv6
-    server_socket_ipv6.bind(('::', 9999))  # IPv6
+    server_socket_ipv6.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 1) 
+    server_socket_ipv6.bind(sa)  
     server_socket_ipv6.listen(5)
     print("Servidor IPv6 escuchando en el puerto 9999")
 
@@ -151,7 +160,6 @@ def iniciar_servidor():
     stop_event = threading.Event()
 
     try:
-        # Crear y arrancar los hilos para IPv4 e IPv6
         hilo_ipv4 = threading.Thread(target=servidor_ipv4, args=(log_queue, stop_event))
         hilo_ipv6 = threading.Thread(target=servidor_ipv6, args=(log_queue, stop_event))
 

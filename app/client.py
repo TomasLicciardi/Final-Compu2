@@ -49,7 +49,6 @@ def menu_pelicula(cliente_socket, id_pelicula):
             print("Opción inválida. Inténtalo de nuevo.")
 
 def iniciar_cliente():
-    # Preguntar al usuario qué tipo de conexión desea usar
     eleccion = input("¿Deseas usar IPv4 (1) o IPv6 (2)? ")
 
     if eleccion == '1':
