@@ -106,7 +106,6 @@ def obtener_direccion_info(host, port, familia):
         return af, socktype, proto, sa
     return None
 
-
 def servidor_ipv4(log_queue, stop_event):
     af, socktype, proto, sa = obtener_direccion_info('0.0.0.0', 9999, socket.AF_INET)
     server_socket_ipv4 = socket.socket(af, socktype, proto)
@@ -159,15 +158,31 @@ def iniciar_servidor():
 
     stop_event = threading.Event()
 
+    soporte_ipv4 = False
+    soporte_ipv6 = False
+
+    for res in socket.getaddrinfo(None, 9999, socket.AF_UNSPEC, socket.SOCK_STREAM):
+        af, socktype, proto, canonname, sa = res
+        if af == socket.AF_INET:
+            soporte_ipv4 = True
+        elif af == socket.AF_INET6:
+            soporte_ipv6 = True
+
     try:
-        hilo_ipv4 = threading.Thread(target=servidor_ipv4, args=(log_queue, stop_event))
-        hilo_ipv6 = threading.Thread(target=servidor_ipv6, args=(log_queue, stop_event))
+        if soporte_ipv4:
+            hilo_ipv4 = threading.Thread(target=servidor_ipv4, args=(log_queue, stop_event))
+            hilo_ipv4.start()
 
-        hilo_ipv4.start()
-        hilo_ipv6.start()
+        if soporte_ipv6:
+            hilo_ipv6 = threading.Thread(target=servidor_ipv6, args=(log_queue, stop_event))
+            hilo_ipv6.start()
 
-        hilo_ipv4.join()
-        hilo_ipv6.join()
+        if soporte_ipv4:
+            hilo_ipv4.join()
+
+        if soporte_ipv6:
+            hilo_ipv6.join()
+            
     except KeyboardInterrupt:
         print("\nCerrando servidor...")
         stop_event.set()
