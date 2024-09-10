@@ -5,6 +5,9 @@ from models import Session, Usuario, Pelicula, Review
 import multiprocessing
 from logs import log_writer
 
+
+lock = threading.Lock()
+
 def hashear_contrasena(contrasena):
     return hashlib.sha256(contrasena.encode()).hexdigest()
 
@@ -20,52 +23,54 @@ def manejar_cliente(cliente_socket, log_queue):
             if not datos:
                 break
 
-            tipo_solicitud, *params = datos.split(',')
-
+            tipo_solicitud, *params = datos.split('|')
             if tipo_solicitud == 'registrar':
                 nombre, apellido, alias, contrasena = params
                 contrasena_hasheada = hashear_contrasena(contrasena)
 
-                if session.query(Usuario).filter_by(alias=alias).first():
-                    cliente_socket.send(b'Alias ya en uso')
-                else:
-                    nuevo_usuario = Usuario(nombre=nombre, apellido=apellido, alias=alias, contrasena=contrasena_hasheada)
-                    session.add(nuevo_usuario)
-                    session.commit()
-                    cliente_socket.send(b'Registro exitoso')
-                    id_usuario = nuevo_usuario.id
-                    if id_usuario is not None:
-                        log_queue.put(f"Nuevo usuario registrado: {alias}")
+                with lock:
+                    if session.query(Usuario).filter_by(alias=alias).first():
+                        cliente_socket.send(b'Alias ya en uso')
                     else:
-                        cliente_socket.send(b'Error al registrar')
+                        nuevo_usuario = Usuario(nombre=nombre, apellido=apellido, alias=alias, contrasena=contrasena_hasheada)
+                        session.add(nuevo_usuario)
+                        session.commit()
+                        cliente_socket.send(b'Registro exitoso')
+                        id_usuario = nuevo_usuario.id
+                        if id_usuario is not None:
+                            log_queue.put(f"Nuevo usuario registrado: {alias}")
+                        else:
+                            cliente_socket.send(b'Error al registrar')
 
             elif tipo_solicitud == 'iniciar_sesion':
                 alias, contrasena = params
                 contrasena_hasheada = hashear_contrasena(contrasena)
 
-                usuario = session.query(Usuario).filter_by(alias=alias, contrasena=contrasena_hasheada).first()
-                if usuario:
-                    id_usuario = usuario.id
-                    if id_usuario is not None:
-                        cliente_socket.send(b'Inicio de sesion exitoso')
-                        log_queue.put(f"Usuario inicio sesion: {alias}")
+                with lock:
+                    usuario = session.query(Usuario).filter_by(alias=alias, contrasena=contrasena_hasheada).first()
+                    if usuario:
+                        id_usuario = usuario.id
+                        if id_usuario is not None:
+                            cliente_socket.send(b'Inicio de sesion exitoso')
+                            log_queue.put(f"Usuario inicio sesion: {alias}")
+                        else:
+                            cliente_socket.send(b'Error al iniciar sesion')
                     else:
-                        cliente_socket.send(b'Error al iniciar sesion')
-                else:
-                    cliente_socket.send(b'Credenciales invalidas')
+                        cliente_socket.send(b'Credenciales invalidas')
 
             elif tipo_solicitud == 'agregar_pelicula':
                 nombre, genero = params
-                nueva_pelicula = Pelicula(nombre=nombre, genero=genero)
-                session.add(nueva_pelicula)
-                session.commit()
+                with lock:
+                    nueva_pelicula = Pelicula(nombre=nombre, genero=genero)
+                    session.add(nueva_pelicula)
+                    session.commit()
                 cliente_socket.send(b'Pelicula agregada exitosamente')
                 log_queue.put(f"Se ha agregado la película '{nombre}' por el usuario {alias}")
 
             elif tipo_solicitud == 'ver_peliculas':
                 genero = params[0]
-                peliculas = session.query(Pelicula).filter_by(genero=genero).all()
-
+                with lock:
+                    peliculas = session.query(Pelicula).filter_by(genero=genero).all()
                 if not peliculas:
                     cliente_socket.send(f"No hay películas disponibles en el género {genero}.".encode('utf-8'))
                 else:
@@ -74,17 +79,18 @@ def manejar_cliente(cliente_socket, log_queue):
 
             elif tipo_solicitud == 'agregar_review':
                 id_pelicula, texto, calificacion = params
-                nueva_review = Review(texto=texto, calificacion=int(calificacion), id_usuario=id_usuario, id_pelicula=int(id_pelicula))
-                session.add(nueva_review)
-                session.commit()
+                with lock:
+                    nueva_review = Review(texto=texto, calificacion=int(calificacion), id_usuario=id_usuario, id_pelicula=int(id_pelicula))
+                    session.add(nueva_review)
+                    session.commit()
                 cliente_socket.send(b'Review agregada exitosamente')
                 pelicula = session.query(Pelicula).filter_by(id=id_pelicula).first()
                 log_queue.put(f"Se ha agregado una nueva review a la película '{pelicula.nombre}' por el usuario {alias}")
 
             elif tipo_solicitud == 'ver_reviews':
                 id_pelicula = params[0]
-                reviews = session.query(Review).filter_by(id_pelicula=id_pelicula).all()
-                
+                with lock:
+                    reviews = session.query(Review).filter_by(id_pelicula=id_pelicula).all()
                 if not reviews:
                     cliente_socket.send(b'No hay reviews de esta pelicula.')
                 else:
@@ -99,6 +105,7 @@ def manejar_cliente(cliente_socket, log_queue):
     finally:
         session.close()
         cliente_socket.close()
+
 
 def obtener_direccion_info(host, port, familia):
     for res in socket.getaddrinfo(host, port, familia, socket.SOCK_STREAM):

@@ -6,13 +6,13 @@ def cliente_registro():
     nombre = input("Ingresa tu nombre: ")
     apellido = input("Ingresa tu apellido: ")
     contrasena = getpass.getpass("Ingresa tu contraseña: ")
-    solicitud = f"registrar,{nombre},{apellido},{alias},{contrasena}"
+    solicitud = f"registrar|{nombre}|{apellido}|{alias}|{contrasena}"
     return solicitud
 
 def cliente_inicio_sesion():
     alias = input("Ingresa tu alias: ")
     contrasena = getpass.getpass("Ingresa tu contraseña: ")
-    solicitud = f"iniciar_sesion,{alias},{contrasena}"
+    solicitud = f"iniciar_sesion|{alias}|{contrasena}"
     return solicitud
 
 def menu_pelicula(cliente_socket, id_pelicula):
@@ -30,16 +30,16 @@ def menu_pelicula(cliente_socket, id_pelicula):
                     break
                 else:
                     print("Calificación inválida. Inténtalo de nuevo.")
-            solicitud = f"agregar_review,{id_pelicula},{texto},{calificacion}"
+            solicitud = f"agregar_review|{id_pelicula}|{texto}|{calificacion}"
             cliente_socket.send(solicitud.encode('utf-8'))
             respuesta = cliente_socket.recv(1024).decode('utf-8')
             print(f"Respuesta del servidor: {respuesta}")
         elif eleccion == '2':
-            solicitud = f"ver_reviews,{id_pelicula}"
+            solicitud = f"ver_reviews|{id_pelicula}"
             cliente_socket.send(solicitud.encode('utf-8'))
             respuesta = cliente_socket.recv(1024).decode('utf-8')
             
-            if respuesta == "No hay reviews de esta película.":
+            if respuesta == "No hay reviews de esta pelicula.":
                 print(respuesta)
             else:
                 print(f"Reviews:\n{respuesta}")
@@ -124,7 +124,7 @@ def iniciar_cliente():
                                 break
                             else:
                                 print("Género inválido. Inténtalo de nuevo.")
-                        solicitud = f"agregar_pelicula,{nombre},{genero}"
+                        solicitud = f"agregar_pelicula|{nombre}|{genero}"
                         cliente_socket.send(solicitud.encode('utf-8'))
                         respuesta = cliente_socket.recv(1024).decode('utf-8')
                         print(f"Respuesta del servidor: {respuesta}")
@@ -152,7 +152,7 @@ def iniciar_cliente():
                             print("Opción no válida.")
                             continue
                         
-                        solicitud = f"ver_peliculas,{genero}"
+                        solicitud = f"ver_peliculas|{genero}"
                         cliente_socket.send(solicitud.encode('utf-8'))
                         respuesta = cliente_socket.recv(1024).decode('utf-8')
                         print(f"Películas disponibles:\n{respuesta}")
