@@ -117,7 +117,7 @@ def servidor_ipv4(log_queue, stop_event):
     af, socktype, proto, sa = obtener_direccion_info('0.0.0.0', 9999, socket.AF_INET)
     server_socket_ipv4 = socket.socket(af, socktype, proto)
     server_socket_ipv4.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    server_socket_ipv4.bind(sa)  # IPv4
+    server_socket_ipv4.bind(sa) 
     server_socket_ipv4.listen(5)
     print("Servidor IPv4 escuchando en el puerto 9999")
 
