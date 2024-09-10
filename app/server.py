@@ -37,26 +37,18 @@ def manejar_cliente(cliente_socket, log_queue):
                         session.commit()
                         cliente_socket.send(b'Registro exitoso')
                         id_usuario = nuevo_usuario.id
-                        if id_usuario is not None:
-                            log_queue.put(f"Nuevo usuario registrado: {alias}")
-                        else:
-                            cliente_socket.send(b'Error al registrar')
+                        log_queue.put(f"Nuevo usuario registrado: {alias}")
 
             elif tipo_solicitud == 'iniciar_sesion':
                 alias, contrasena = params
                 contrasena_hasheada = hashear_contrasena(contrasena)
-
-                with lock:
-                    usuario = session.query(Usuario).filter_by(alias=alias, contrasena=contrasena_hasheada).first()
-                    if usuario:
-                        id_usuario = usuario.id
-                        if id_usuario is not None:
-                            cliente_socket.send(b'Inicio de sesion exitoso')
-                            log_queue.put(f"Usuario inicio sesion: {alias}")
-                        else:
-                            cliente_socket.send(b'Error al iniciar sesion')
-                    else:
-                        cliente_socket.send(b'Credenciales invalidas')
+                usuario = session.query(Usuario).filter_by(alias=alias, contrasena=contrasena_hasheada).first()
+                if usuario:
+                    id_usuario = usuario.id
+                    cliente_socket.send(b'Inicio de sesion exitoso')
+                    log_queue.put(f"Usuario inicio sesion: {alias}")
+                else:
+                    cliente_socket.send(b'Credenciales invalidas')
 
             elif tipo_solicitud == 'agregar_pelicula':
                 nombre, genero = params
@@ -69,8 +61,7 @@ def manejar_cliente(cliente_socket, log_queue):
 
             elif tipo_solicitud == 'ver_peliculas':
                 genero = params[0]
-                with lock:
-                    peliculas = session.query(Pelicula).filter_by(genero=genero).all()
+                peliculas = session.query(Pelicula).filter_by(genero=genero).all()
                 if not peliculas:
                     cliente_socket.send(f"No hay películas disponibles en el género {genero}.".encode('utf-8'))
                 else:
@@ -89,8 +80,7 @@ def manejar_cliente(cliente_socket, log_queue):
 
             elif tipo_solicitud == 'ver_reviews':
                 id_pelicula = params[0]
-                with lock:
-                    reviews = session.query(Review).filter_by(id_pelicula=id_pelicula).all()
+                reviews = session.query(Review).filter_by(id_pelicula=id_pelicula).all()
                 if not reviews:
                     cliente_socket.send(b'No hay reviews de esta pelicula.')
                 else:
