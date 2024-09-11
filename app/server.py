@@ -4,9 +4,12 @@ import hashlib
 from models import Session, Usuario, Pelicula, Review
 import multiprocessing
 from logs import log_writer
+import os
 
 
 lock = threading.Lock()
+
+PUERTO = int(os.getenv('PUERTO_SERVIDOR'))
 
 def hashear_contrasena(contrasena):
     return hashlib.sha256(contrasena.encode()).hexdigest()
@@ -104,12 +107,12 @@ def obtener_direccion_info(host, port, familia):
     return None
 
 def servidor_ipv4(log_queue, stop_event):
-    af, socktype, proto, sa = obtener_direccion_info('0.0.0.0', 9999, socket.AF_INET)
+    af, socktype, proto, sa = obtener_direccion_info('0.0.0.0', PUERTO, socket.AF_INET)
     server_socket_ipv4 = socket.socket(af, socktype, proto)
     server_socket_ipv4.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     server_socket_ipv4.bind(sa) 
     server_socket_ipv4.listen(5)
-    print("Servidor IPv4 escuchando en el puerto 9999")
+    print(f"Servidor IPv4 escuchando en el puerto {PUERTO}")
 
     while not stop_event.is_set():
         try:
@@ -126,13 +129,13 @@ def servidor_ipv4(log_queue, stop_event):
     server_socket_ipv4.close()
 
 def servidor_ipv6(log_queue, stop_event):
-    af, socktype, proto, sa = obtener_direccion_info('::', 9999, socket.AF_INET6)
+    af, socktype, proto, sa = obtener_direccion_info('::', PUERTO, socket.AF_INET6)
     server_socket_ipv6 = socket.socket(af, socktype, proto)
     server_socket_ipv6.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     server_socket_ipv6.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 1) 
     server_socket_ipv6.bind(sa)  
     server_socket_ipv6.listen(5)
-    print("Servidor IPv6 escuchando en el puerto 9999")
+    print(f"Servidor IPv6 escuchando en el puerto {PUERTO}")
 
     while not stop_event.is_set():
         try:

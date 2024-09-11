@@ -2,3 +2,4 @@
 /app/__pycache__
 /app/peliculas.txt
 /app/resumen.txt
+/app/.env
