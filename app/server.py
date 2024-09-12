@@ -161,7 +161,7 @@ def iniciar_servidor():
     soporte_ipv4 = False
     soporte_ipv6 = False
 
-    for res in socket.getaddrinfo(None, 9999, socket.AF_UNSPEC, socket.SOCK_STREAM):
+    for res in socket.getaddrinfo(None, PUERTO, socket.AF_UNSPEC, socket.SOCK_STREAM):
         af, socktype, proto, canonname, sa = res
         if af == socket.AF_INET:
             soporte_ipv4 = True

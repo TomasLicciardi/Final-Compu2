@@ -1,5 +1,9 @@
 import socket
 import getpass
+import os
+
+PUERTO = int(os.getenv('PUERTO_SERVIDOR'))
+
 
 def cliente_registro():
     alias = input("Elige un alias: ")
@@ -62,9 +66,9 @@ def iniciar_cliente():
     cliente_socket = socket.socket(family, socket.SOCK_STREAM)
 
     if family == socket.AF_INET:
-        cliente_socket.connect(('127.0.0.1', 9999))
+        cliente_socket.connect(('127.0.0.1', PUERTO))
     else:
-        cliente_socket.connect(('::1', 9999))
+        cliente_socket.connect(('::1', PUERTO))
 
     try:
         while True:
